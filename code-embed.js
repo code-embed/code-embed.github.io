@@ -1,21 +1,25 @@
 // Generic Web Component loader for NA-ME.github.io hosting
 // <script src="https://NA-ME.github.io/name.js">
-// Loading:
-//  - NA-ME-baseclass.js
-//  - NA-ME-pro.js (optional)
+// Load multiple files ?file=pro,foo,bar
 ((
     scriptSrc = document.currentScript.src,
-    version = new URL(scriptSrc).searchParams.get("v"), // or undefined
-    filename = scriptSrc.split("/").pop().split("."),
-    name = filename[0],
-    minified = filename[1] == "min" ? filename[1] : "",
-    prefix = location.hostname.includes("github.io") ? `https://${name}.github.io/` : ""
+    params = new URL(scriptSrc).searchParams,
+    filename = scriptSrc.split("/").pop().split("."), // "code-embed.min.js"
+    name = params.get("name") || filename[0], // web-component-loader.github.io/loader.js?name=code-embed
+    files = params.get("files") || false, // false sets name in customElements registry
+    minified = filename[1] == "min" ? filename[1] : "", // if src is minified call all minified files
+    prefix = location.hostname.includes("github.io") ? `https://${params.get("host") || name}.github.io/` : "",
+    scripts = [`${name}-baseclass${minified}.js`],
 ) => {
-    console.log(location.hostname)
-    document.head.append(...[name + `-baseclass${minified}.js`, ...(version ? [name + `-${version}${minified}.js`] : [])]
-        .map(src => Object.assign(document.createElement("script"), {
-            title: "injected", src: prefix + src, async: true, type: "module", onload: () => version && console.log("Loaded:", src)
-        })));
-    customElements.whenDefined(name + "-baseclass").then(B => !version && customElements.define(name, class extends B { })
-    );
+    if (files) scripts.push(...files.split(",").map(module => `${name}-${module}${minified}.js`))
+    document.head.append(...scripts.map((src, idx) => Object.assign(document.createElement("script"), {
+        title: "injected",
+        src: prefix + src,
+        async: params.get("async") || true,
+        [params.get("type") ? "type" : "notype"]: params.get("type") ? params.get("type") : "module",
+        onload: () => console.log(`%c Loaded (${async ? "A" : ""}${idx}) %c %s `, "background:gold;color:black", "background:green;color:white", src),
+        onerror: () => console.log(`%c Failed (${idx}) %c %s `, "background:red;color:black", "background:green;color:white", src)
+    })));
+    customElements.whenDefined(name + "-baseclass").then(B => !files && customElements.define(name, class extends B { }));
 })();
+
