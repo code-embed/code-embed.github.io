@@ -1,4 +1,7 @@
 (function () {
+
+    let fileName = document.currentScript.src.split("/").slice(-1)[0];
+
     const url = new URL(document.currentScript && document.currentScript.src || "");
     const componentName = url.searchParams.get("name") || "code-embed-baseclass";
     const fontFile = url.searchParams.get("fontfile") || `https://code-embed.github.io/font/FontWithASyntaxHighlighter-Regular.woff2`;
@@ -120,8 +123,8 @@
                     this.overlayed = createElement("div",
                         {
                             id: "overlay",
-                            innerHTML: "666",
                             styles: {
+                                display: "none",
                                 marginLeft: "4ch",
                                 position: "absolute",
                                 width: "100%",
@@ -152,4 +155,7 @@
             if (this.linenumbers) this.linenumbers({})
         }
     });
+
+    console.log(`%c Loaded %c ${fileName} `, "font-size:75%", "background:blue", "")
+
 })();
