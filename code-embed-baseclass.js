@@ -145,7 +145,10 @@
                 .then(result => result.ok ? result.text() : Promise.reject(result.status))
                 .then(value => {
                     this.value = value;
-                }).catch((e) => this.innerHTML = `Unable to load(${e}): ` + src);
+                }).catch((e) => {
+                    console.error(e);
+                    this.innerHTML = `Unable to load(${e}): ` + src
+                });
         }
         get value() {
             return this.textarea.value;
