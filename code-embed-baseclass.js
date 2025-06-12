@@ -1,14 +1,18 @@
 (function () {
+    const url = new URL(document.currentScript && document.currentScript.src || "");
+    const componentName = url.searchParams.get("name") || "code-embed-baseclass";
+
     // ********************************************************************
-    function createElement(tag, options = {}, ...children) {
+    const createElement = (tag, options = {}, ...children) => {
         let { styles = {}, ...props } = options;
         const el = document.createElement(tag);
         Object.assign(el.style, styles);
         el.append(...children);
         return Object.assign(el, props);
     }
+
     // ********************************************************************
-    customElements.define("code-embed-baseclass", class extends HTMLElement {
+    customElements.define(componentName, class extends HTMLElement {
         get lineHeight() {
             return 1.2;
         }
@@ -22,7 +26,7 @@
         set fontSize(val) {
             if (this.textarea) {
                 this.textarea.style.fontSize = typeof val === "number" ? `${val}px` : val;
-                this.svgbackground({});
+                this.linenumbers({});
             }
         }
         constructor() {
@@ -112,6 +116,19 @@
                         readOnly: this.hasAttribute("readonly"),
                         styles: { width: "100%" }
                     })),
+                    this.overlayed = createElement("div",
+                        {
+                            id: "overlay",
+                            innerHTML: "666",
+                            styles: {
+                                marginLeft: "4ch",
+                                position: "absolute",
+                                width: "100%",
+                                background: "green",
+                                color: "yellow"
+                            }
+                        },
+                    ),
                 )
             );
             this.fetch();
@@ -128,7 +145,7 @@
         }
         set value(value) {
             this.textarea.value = value;
-            if (this.svgbackground) this.svgbackground({})
+            if (this.linenumbers) this.linenumbers({})
         }
     });
 })();
