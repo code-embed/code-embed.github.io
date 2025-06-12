@@ -151,6 +151,14 @@
                     this.innerHTML = `Unable to load(${e}): ` + src
                 });
         }
+        get src() {
+
+        }
+        set src(src) {
+            setTimeout(() => {
+                this.fetch(src)
+            }, 0);
+        }
         get value() {
             return this.textarea.value;
         }
