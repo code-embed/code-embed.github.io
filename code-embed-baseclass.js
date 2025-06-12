@@ -141,6 +141,7 @@
             this.fetch();
         }
         fetch(src = this.getAttribute("src")) {
+            console.log(`%c load %c %s `, "font-size:75%", "background:lightblue", src)
             fetch(src)
                 .then(result => result.ok ? result.text() : Promise.reject(result.status))
                 .then(value => {
@@ -159,6 +160,6 @@
         }
     });
 
-    console.log(`%c Loaded %c ${fileName} `, "font-size:75%", "background:blue", "")
+    console.log(`%c Loaded %c %s `, "font-size:75%", "background:blue", fileName)
 
 })();
