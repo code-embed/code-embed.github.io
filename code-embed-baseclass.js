@@ -47,6 +47,12 @@
                     this.background = createElement("style", {
                         id: "background"
                     }),
+                    this.overlaystyle = createElement("style", {
+                        id: "overlaystyle",
+                        textContent:
+                            `#overlay{position:absolute;width:100%}` +
+                            `#overlay{display:none;margin-left:4ch;background:green;color:yellow}`
+                    }),
             )
             // div/textarea appended in connectedCallback
         }
@@ -122,15 +128,7 @@
                     })),
                     this.overlayed = createElement("div",
                         {
-                            id: "overlay",
-                            styles: {
-                                display: "none",
-                                marginLeft: "4ch",
-                                position: "absolute",
-                                width: "100%",
-                                background: "green",
-                                color: "yellow"
-                            }
+                            id: "overlay"
                         },
                     ),
                 )
@@ -141,10 +139,10 @@
             this.fetch();
         }
         fetch(src = this.getAttribute("src")) {
-            console.log(`%c load %c %s `, "font-size:75%", "background:lightblue", src)
             fetch(src)
                 .then(result => result.ok ? result.text() : Promise.reject(result.status))
                 .then(value => {
+                    console.log(`%c fetched %c %s `, "font-size:75%", "background:lightgreen;color:black", src)
                     this.value = value;
                 }).catch((e) => {
                     console.error(e);
