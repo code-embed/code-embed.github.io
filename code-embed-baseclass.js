@@ -4,7 +4,6 @@
 
     const url = new URL(document.currentScript && document.currentScript.src || "");
     const componentName = url.searchParams.get("name") || "code-embed-baseclass";
-    const fontFile = url.searchParams.get("fontfile") || `https://code-embed.github.io/font/FontWithASyntaxHighlighter-Regular.woff2`;
 
     // ********************************************************************
     const createElement = (tag, options = {}, ...children) => {
@@ -76,21 +75,24 @@
                             color_variable = getColorProperty("variable") || "#FFFFFF",
                             color_constant = getColorProperty("constant") || "#FFCB6B",
                             color_special = getColorProperty("comment") || "#ff79c6",
+                            // ------------------------------------------------
                             color_background = this.getAttribute("color_background") || "var(--code-embed-color_background,black)",
                             color_text = this.getAttribute("color_text") || "var(--code-embed-color_text,#6A9955)",
+                            // ------------------------------------------------
+                            font = `FontWithASyntaxHighlighter-Regular`,
+                            fontfile = `https://code-embed.github.io/font/${font}.woff2`,
+                            palette = `--SyntaxHighlighter`
                         }) => {
                             this.palettestyle.textContent =
-                                `textarea{font-palette:--SyntaxHighlighter;font:1em 'FontWithASyntaxHighlighter-Regular'}` +
+                                `textarea{font-palette:${palette};font:1em '${font}'}` +
                                 `textarea{background:${color_background};color:${color_text}}`;
                             this.colors.textContent = `@font-face{` +
-                                `font-family:'FontWithASyntaxHighlighter-Regular';` +
-                                `src:url('${fontFile}') format('woff2');` +
                                 `font-weight:normal;` +
                                 `font-style:normal;` +
                                 `font-display:swap;` +
                                 `}` +
-                                `@font-palette-values --SyntaxHighlighter{` +
-                                `font-family:'FontWithASyntaxHighlighter-Regular';` +
+                                `@font-palette-values ${palette}{` +
+                                `font-family:'${font}';` +
                                 `override-colors:` +
                                 // No, CSS properties (like variables --var) cannot be used directly in the override-colors property of @font-palette-values. 
                                 // The override-colors property requires actual color values (hex, rgb, etc.) at parse time, not CSS custom properties.
@@ -103,7 +105,17 @@
                                 ` 6 ${color_variable},` +
                                 ` 7 ${color_constant},` +
                                 ` 8 ${color_special}` +
-                                `}`
+                                `}`;
+                            if (!window.__FontWithASyntaxHighlighter) {
+                                window.__FontWithASyntaxHighlighter = true;
+                                const newfont = new FontFace(font, `url('${fontfile}')`);
+                                newfont.load().then(() => {
+                                    document.fonts.add(newfont);
+                                    console.log(`%c Font loaded `, "font-size:75%;background:orange;color:black", fontfile);
+                                }).catch(e => {
+                                    console.error("Font failed to load:", fontfile, e);
+                                });
+                            }
                         }
                     }));
             this.colors.set({});
@@ -142,7 +154,7 @@
             fetch(src)
                 .then(result => result.ok ? result.text() : Promise.reject(result.status))
                 .then(value => {
-                    console.log(`%c fetched %c %s `, "font-size:75%", "background:lightgreen;color:black", src)
+                    console.log(`%c fetched `, "font-size:75%;background:blue", src)
                     this.value = value;
                 }).catch((e) => {
                     console.error(e);
