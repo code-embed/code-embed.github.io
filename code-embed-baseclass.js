@@ -5,6 +5,8 @@
     const url = new URL(document.currentScript && document.currentScript.src || "");
     const componentName = url.searchParams.get("name") || "code-embed-baseclass";
 
+    const _FONTNAME_ = `FontWithASyntaxHighlighter-Regular`;
+
     // ********************************************************************
     const createElement = (tag, options = {}, ...children) => {
         let { styles = {}, ...props } = options;
@@ -58,14 +60,15 @@
         createStyle() {
             const getColorProperty = name => getComputedStyle(this).getPropertyValue('--code-embed-color_' + name);
             // ----------------------------------------------------------------
-            const uniqueID = "codeEmbedcolors_" + crypto.randomUUID().replaceAll("-", "");
-            this.colors = (this.colors || document.head.querySelector("style#" + uniqueID));
-            if (!this.colors)
+            this.colors = (this.colors || document.head.querySelector("style#" + this.colors_id));
+            if (!this.colors) {
+                this.colors_id = "codeEmbedcolors_" + crypto.randomUUID().replaceAll("-", "");
                 this.colors = document.head.appendChild(
                     createElement("style", {
                         title: "injected",
-                        id: uniqueID,
+                        id: this.colors_id,
                         set: ({
+                            // ------------------------------------------------
                             color_tag = getColorProperty("tag") || "#ec8065",
                             color_comment = getColorProperty("comment") || "#b6c2a3",
                             color_keyword = getColorProperty("keyword") || "#C792EA",
@@ -79,36 +82,22 @@
                             color_background = this.getAttribute("color_background") || "var(--code-embed-color_background,black)",
                             color_text = this.getAttribute("color_text") || "var(--code-embed-color_text,#6A9955)",
                             // ------------------------------------------------
-                            font = `FontWithASyntaxHighlighter-Regular`,
+                            font = _FONTNAME_,
                             fontfile = `https://code-embed.github.io/font/${font}.woff2`,
+                            newfont = new FontFace(font, `url('${fontfile}')`),
                             palette = `--SyntaxHighlighter`
                         }) => {
                             this.palettestyle.textContent =
                                 `textarea{font-palette:${palette};font:1em '${font}'}` +
                                 `textarea{background:${color_background};color:${color_text}}`;
-                            this.colors.textContent = `@font-face{` +
-                                `font-weight:normal;` +
-                                `font-style:normal;` +
-                                `font-display:swap;` +
-                                `}` +
-                                `@font-palette-values ${palette}{` +
-                                `font-family:'${font}';` +
-                                `override-colors:` +
-                                // No, CSS properties (like variables --var) cannot be used directly in the override-colors property of @font-palette-values. 
-                                // The override-colors property requires actual color values (hex, rgb, etc.) at parse time, not CSS custom properties.
-                                ` 0 ${color_tag},` +
-                                ` 1 ${color_comment},` +
-                                ` 2 ${color_keyword},` +
-                                ` 3 ${color_function},` +
-                                ` 4 ${color_string},` +
-                                ` 5 ${color_number},` +
-                                ` 6 ${color_variable},` +
-                                ` 7 ${color_constant},` +
-                                ` 8 ${color_special}` +
+                            this.colors.textContent = `@font-face{font-weight:normal;font-style:normal;font-display:swap}` +
+                                `@font-palette-values ${palette}{font-family:'${font}';override-colors:` +
+                                // override-colors requires actual color values (hex, rgb, etc.) at parse time, not CSS custom properties.
+                                ` 0 ${color_tag}, 1 ${color_comment}, 2 ${color_keyword}, 3 ${color_function},` +
+                                ` 4 ${color_string}, 5 ${color_number}, 6 ${color_variable}, 7 ${color_constant}, 8 ${color_special}` +
                                 `}`;
-                            if (!window.__FontWithASyntaxHighlighter) {
-                                window.__FontWithASyntaxHighlighter = true;
-                                const newfont = new FontFace(font, `url('${fontfile}')`);
+                            if (!window["__" + _FONTNAME_]) {
+                                window["__" + _FONTNAME_] = true;
                                 newfont.load().then(() => {
                                     document.fonts.add(newfont);
                                     console.log(`%c Font loaded `, "font-size:75%;background:orange;color:black", fontfile);
@@ -118,6 +107,7 @@
                             }
                         }
                     }));
+            }
             this.colors.set({});
         }
         connectedCallback() {
@@ -145,10 +135,24 @@
                     ),
                 )
             );
-            this.textarea.style.display = "block";
-            this.textarea.style.transition = "opacity 0.3s";
-            requestAnimationFrame(() => this.textarea.style.opacity = 1);
             this.fetch();
+        }
+        fadein() {
+            const afterFontLoaded = () => {
+                this.textarea.style.display = "block";
+                this.textarea.style.opacity = 0;
+                this.textarea.style.transition = "opacity 0.3s";
+                requestAnimationFrame(() => this.textarea.style.opacity = 1);
+            }
+            if (document.fonts && document.fonts.check(`1em '${_FONTNAME_}'`)) {
+                afterFontLoaded();
+            } else if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    afterFontLoaded();
+                });
+            } else {
+                afterFontLoaded();
+            }
         }
         fetch(src = this.getAttribute("src")) {
             fetch(src)
@@ -156,6 +160,7 @@
                 .then(value => {
                     console.log(`%c fetched `, "font-size:75%;background:blue", src)
                     this.value = value;
+                    this.fadein();
                 }).catch((e) => {
                     console.error(e);
                     this.innerHTML = `Unable to load(${e}): ` + src
