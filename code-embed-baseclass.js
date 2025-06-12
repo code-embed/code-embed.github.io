@@ -1,6 +1,7 @@
 (function () {
     const url = new URL(document.currentScript && document.currentScript.src || "");
     const componentName = url.searchParams.get("name") || "code-embed-baseclass";
+    const fontFile = url.searchParams.get("fontfile") || `https://code-embed.github.io/font/FontWithASyntaxHighlighter-Regular.woff2`;
 
     // ********************************************************************
     const createElement = (tag, options = {}, ...children) => {
@@ -74,7 +75,7 @@
                                 `textarea{background:${color_background};color:${color_text}}`;
                             this.colors.textContent = `@font-face{` +
                                 `font-family:'FontWithASyntaxHighlighter-Regular';` +
-                                `src:url('./font/FontWithASyntaxHighlighter-Regular.woff2') format('woff2');` +
+                                `src:url('${fontFile}') format('woff2');` +
                                 `font-weight:normal;` +
                                 `font-style:normal;` +
                                 `font-display:swap;` +
@@ -114,7 +115,7 @@
                     (this.textarea = createElement("textarea", {
                         rows: this.getAttribute("rows") || 40,
                         readOnly: this.hasAttribute("readonly"),
-                        styles: { width: "100%" }
+                        styles: { width: "100%", display: "none" }
                     })),
                     this.overlayed = createElement("div",
                         {
@@ -131,6 +132,9 @@
                     ),
                 )
             );
+            this.textarea.style.display = "block";
+            this.textarea.style.transition = "opacity 0.3s";
+            requestAnimationFrame(() => this.textarea.style.opacity = 1);
             this.fetch();
         }
         fetch(src = this.getAttribute("src")) {
