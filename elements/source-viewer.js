@@ -1,4 +1,4 @@
-(function () {
+!(function () {
     const url = new URL(document.currentScript?.src || "");
     const componentName = url.searchParams.get("name") || "source-viewer";
     // ********************************************************************

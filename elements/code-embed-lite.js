@@ -92,15 +92,18 @@
                     part: "textarea",
                 })
             );
-            this.textarea.setAttribute("autocapitalize", this.getAttribute("autocapitalize") || "off");
-            this.textarea.setAttribute("autocomplete", this.getAttribute("autocomplete") || "off");
-            this.textarea.setAttribute("autocorrect", this.getAttribute("autocorrect") || "off");
-            this.textarea.setAttribute("spellcheck", this.getAttribute("spellcheck") || "false");
+            // --------------------------------------------------------- disable input features
+            [["autocapitalize", "off"],
+                ["autocomplete", "off"],
+                ["autocorrect", "off"],
+                ["spellcheck", "false"]].forEach(([attr, state]) => {
+                    this.textarea.setAttribute(attr, state);
+                });
+            // --------------------------------------------------------------- fetch content
             this.fetch();
         }
         // ==================================================================== fitrows
-        fitrows() {
-            let linecount = this.textarea.value.split("\n").length;
+        fitrows(linecount = this.textarea.value.split("\n").length) {
             this.textarea.setAttribute("rows", linecount);
         }
         // ==================================================================== fetch
@@ -129,15 +132,16 @@
                 this.value = await result.text();
             } else {
                 setTimeout(() => {
-                    // for="id" loads outerHTML, in="id" loads innerHTML
-                    let forAttr = this.getAttribute("for");
-                    let inAttr = this.getAttribute("in");
+                    // for="id" loads outerHTML, from="id" loads innerHTML
+                    let forAttr = this.getAttribute("for"); // reads outerHTML
+                    let inAttr = this.getAttribute("from"); // reads innerHTML
                     let elem = forAttr ? document.getElementById(forAttr) : inAttr ? document.getElementById(inAttr) : null;
                     this.value = elem ? (forAttr ? elem.outerHTML : elem.innerHTML) : this.innerHTML;
                     if (this.getAttribute("rows") === "fit") this.fitrows();
                 });
             }
         }
+        // ==================================================================== value property
         set value(val) {
             let lines = val.split("\n").map(line => line.replace(/\r$/, ""));
             // ------------------------------------------------------------ remove common leading spaces
@@ -149,7 +153,7 @@
             // ------------------------------------------------------------ join lines
             lines = lines.join("\n");
             // ------------------------------------------------------------ adjust tabsize
-            let tabsize = this.getAttribute("tabsize")||4;
+            let tabsize = this.getAttribute("tabsize") || 4;
             if (tabsize != 4) {
                 lines = lines.replaceAll("    ", " ".repeat(tabsize));
             }
@@ -160,6 +164,7 @@
         get value() {
             return this.textarea.value;
         }
+
     });
     // ********************************************************************
 })();
