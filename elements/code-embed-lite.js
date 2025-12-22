@@ -137,7 +137,7 @@
                     let inAttr = this.getAttribute("from"); // reads innerHTML
                     let elem = forAttr ? document.getElementById(forAttr) : inAttr ? document.getElementById(inAttr) : null;
                     this.value = elem ? (forAttr ? elem.outerHTML : elem.innerHTML) : this.innerHTML;
-                    if (this.getAttribute("rows") === "fit") this.fitrows();
+                    if (!this.hasAttribute("rows") || this.getAttribute("rows") === "fit") this.fitrows();
                 });
             }
         }
