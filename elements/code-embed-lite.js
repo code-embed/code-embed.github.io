@@ -11,6 +11,10 @@
 
     // ******************************************************************** define component
     customElements.define(componentName, class extends HTMLElement {
+        // ==================================================================== observedAttributes
+        static get observedAttributes() {
+            return ["rows"];
+        }
         // ==================================================================== createStyle
         createStyle() {
             const getColorProperty = name => getComputedStyle(this).getPropertyValue('--code-embed-color_' + name);
@@ -78,6 +82,17 @@
         connectedCallback() {
             this.connect_once();
         }
+        // ==================================================================== attributeChangedCallback
+        attributeChangedCallback(name, oldValue, newValue) {
+            console.log(213, { name, oldValue, newValue });
+            if (name === "rows" && oldValue !== newValue && this.textarea) {
+                if (newValue === "fit") {
+                    this.fitrows();
+                } else {
+                    this.textarea.setAttribute("rows", newValue || 40);
+                }
+            }
+        }
         connect_once() {
             this.connect_once = () => { }
             this.createStyle();
@@ -100,7 +115,28 @@
                     this.textarea.setAttribute(attr, state);
                 });
             // --------------------------------------------------------------- fetch content
-            this.fetch();
+            if (this.hasAttribute("for") || this.hasAttribute("query")) {
+                this.setbycontent();
+            } else {
+                this.fetch();
+            }
+        }
+        // ==================================================================== for property
+        setbycontent() {
+            let elem = document.querySelector(this.getAttribute("query")) || document.getElementById(this.getAttribute("for")) || null;
+            if (elem) {
+                this.value = elem[this.getAttribute("content") || "innerHTML"];
+                if (!this.hasAttribute("rows") || this.getAttribute("rows") === "fit") this.fitrows();
+            }
+        }
+        // ==================================================================== setbyfor_from
+        //! later added code setbycontent above
+        setby_for_from() {
+            // for="id" loads outerHTML, from="id" loads innerHTML
+            let forAttr = this.getAttribute("for"); // reads outerHTML
+            let inAttr = this.getAttribute("from"); // reads innerHTML
+            let elem = forAttr ? document.getElementById(forAttr) : inAttr ? document.getElementById(inAttr) : null;
+            this.value = elem ? (forAttr ? elem.outerHTML : elem.innerHTML) : this.innerHTML;
         }
         // ==================================================================== fitrows
         fitrows(linecount = this.textarea.value.split("\n").length) {
@@ -132,18 +168,21 @@
                 this.value = await result.text();
             } else {
                 setTimeout(() => {
-                    // for="id" loads outerHTML, from="id" loads innerHTML
-                    let forAttr = this.getAttribute("for"); // reads outerHTML
-                    let inAttr = this.getAttribute("from"); // reads innerHTML
-                    let elem = forAttr ? document.getElementById(forAttr) : inAttr ? document.getElementById(inAttr) : null;
-                    this.value = elem ? (forAttr ? elem.outerHTML : elem.innerHTML) : this.innerHTML;
-                    if (!this.hasAttribute("rows") || this.getAttribute("rows") === "fit") this.fitrows();
+                    this.setby_for_from();
                 });
             }
         }
         // ==================================================================== value property
         set value(val) {
             let lines = val.split("\n").map(line => line.replace(/\r$/, ""));
+            // AI: if first line has no leading spaces, align it with last line
+            if (lines.length) {
+                const firstLeading = lines[0].match(/^ */)[0].length;
+                if (firstLeading === 0) {
+                    const lastLeading = (lines[lines.length - 1] || "").match(/^ */)[0].length;
+                    lines[0] = " ".repeat(lastLeading) + lines[0];
+                }
+            }
             // ------------------------------------------------------------ remove common leading spaces
             let minLeadingSpaces = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^ */)[0].length));
             lines = lines.map(line => line.substring(minLeadingSpaces));
@@ -158,7 +197,12 @@
                 lines = lines.replaceAll("    ", " ".repeat(tabsize));
             }
             // ------------------------------------------------------------ set textarea value
+            if (this.hasAttribute("escapehtml")) {
+                lines = lines.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+                console.log(lines);
+            }
             this.textarea.value = lines;
+            if (!this.hasAttribute("rows") || this.getAttribute("rows") === "fit") this.fitrows();
             this.wait4font();
         }
         get value() {

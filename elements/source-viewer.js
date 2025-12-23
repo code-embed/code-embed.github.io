@@ -4,18 +4,14 @@
     // ********************************************************************
     // best helper function ever
     const createElement = (tag, props = {}) => Object.assign(document.createElement(tag), props);
-
-    // ******************************************************************** component settings
-    const CODEEMBED = "code-embed";
-
     // ******************************************************************** define component
     customElements.define(componentName, class extends HTMLElement {
         // ==================================================================== connectedCallback
         connectedCallback() {
-            setTimeout(() => { // make sure lightDOM is loaded
+            setTimeout(() => { // make sure lightDOM is parsed
                 // ------------------------------------------------------------ get attributes
                 const src = this.getAttribute("src");
-                const rows = this.getAttribute("rows") || "fit";
+                console.warn(src)
                 // ------------------------------------------------------------ set shadowDOM
                 this.attachShadow({ mode: "open" })
                     .append(
@@ -25,22 +21,32 @@
                                 `details{padding:1em}` +
                                 `summary{cursor:pointer}` +
                                 `b{color:blue}` +
-                                `${CODEEMBED}{margin-left:2em}`
+                                `code-embed{margin-left:2em}`
                         }),
                         createElement("hr"),
                         createElement("h3", { innerHTML: src }),
                         createElement("div", { innerHTML: this.innerHTML }),
-                        createElement("details", {
-                            open: this.hasAttribute("open"),
-                            innerHTML:
-                                `<summary><b>see: ${src}</b></summary>` +
-                                `<${CODEEMBED} src="${src}" tabsize=2 exportparts="textarea:source"></${CODEEMBED}>`
+                        this.details = createElement("details", {
+                            open: this.hasAttribute("open")
                         })
-                    );
+                ); // append
+                // ------------------------------------------------------------ set details content
+                this.details.append(
+                    createElement("summary", {
+                        innerHTML: `<b>see: ${src}</b>`
+                    }),
+                    // creation already fires the attributeChangedCallback in code-embed-lite.js
+                    // but there is no src set yet, so explicit fetch() is needed below
+                    this.embed = createElement("code-embed")
+                );
+                this.embed.setAttribute("src", src);
+                this.embed.setAttribute("tabsize", 2);
+                this.embed.setAttribute("rows", this.getAttribute("rows") || "fit");
+                this.embed.setAttribute("exportparts", "textarea:source");
+                this.embed.fetch();
                 // ------------------------------------------------------------ fix rows
-                document.addEventListener(`${CODEEMBED}`, (evt) => {
+                document.addEventListener(`code-embed`, (evt) => {
                     if (src === evt.detail.src) {
-                        //this.shadowRoot.querySelector(CODEEMBED).fitrows();
                         evt.composedPath()[0].fitrows()
                     }
                 });
